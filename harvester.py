@@ -107,6 +107,10 @@ class YelpProfileHarvester(object):
         """
         indiv_review_data = {}
 
+        past_reviews = review.find('div', 'archived_reviews')
+        if past_reviews:
+            review.find('div', 'archived_reviews').extract()
+
         business_name_block = review.h4
         raw_business_name = self._get_first_stripped_string(business_name_block)
         indiv_review_data['business_name'] = clean_weird_characters(raw_business_name)
@@ -119,7 +123,11 @@ class YelpProfileHarvester(object):
         indiv_review_data['neighborhood'] = self._get_neighborhod(categories_neighborhood_block)
 
         review_date_block = review.find('span', 'smaller date')
-        indiv_review_data['review_date'] = self._get_first_stripped_string(review_date_block)
+        if review_date_block.em:
+            review_date_block.em.extract()
+        raw_date = self._get_first_stripped_string(review_date_block)
+        found_date = re.search("([0-9]+/[0-9]+/[0-9]{4})", raw_date)
+        indiv_review_data['review_date'] = found_date.group()
 
         stars_block = review.img  # stars_block.get('alt')
         indiv_review_data['stars'] = self._get_block_attribute(stars_block, 'alt', 0, 3)
