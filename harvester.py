@@ -24,27 +24,38 @@ class YelpProfileHarvester(object):
         self.url = url
 
     def initiate(self):
-        response = requests.get(self.url)
+
+        parsed_reviews = []
+        review_counter = 0
+
+        while True:  # This is probably not good
+            paged_url = "{}&rec_pagestart={}&review_sort=time".format(self.url, review_counter)
+            reviews, has_reviews = self._get_reviews_from_url(paged_url)
+            if not has_reviews:
+                if review_counter == 0:
+                    raise YelpProfilePageError('No reviews found on first page for this user')
+                break
+            for review in reviews:
+                parsed_reviews.append(self.parse_individual_review(review))
+            review_counter += 10
+
+        return parsed_reviews
+
+    def _get_reviews_from_url(self, url):
+        response = requests.get(url)
         if not response.ok:
             raise YelpProfilePageError('URL returned a non-ok response')
         res = response.content
 
         soup = BeautifulSoup(res)
-
         reviews = self.get_reviews_on_page(soup)
-
-        if not reviews:
-            raise YelpProfilePageError('No reviews found on the first page for this user')
-
-        parsed_reviews = []
-        for review in reviews:
-            parsed_reviews.append(self.parse_individual_review(review))
-
-        return parsed_reviews
+        return reviews, bool(len(reviews))
 
     def get_reviews_on_page(self, soup):
         return soup.find_all('div', 'review clearfix')
 
+    ######################################################
+    # Individual Review Parser Methods
     def parse_individual_review(self, review):
         """
         Goal: dictionary per deal = {
