@@ -2,8 +2,8 @@ from bs4 import BeautifulSoup
 import csv
 import re
 import requests
-import string
-import unicodedata
+
+from harvester.contrivances import clean_weird_characters
 
 
 def get_user_reviews(url):
@@ -169,12 +169,6 @@ class YelpProfileHarvester(object):
             return star_string[start_char:]
         else:
             return star_string[start_char:stop_char]
-
-
-# Shamelessly taken from StackOverflow
-def clean_weird_characters(messy_string):
-   intermediate_string = ''.join((ch for ch in unicodedata.normalize('NFD', unicode(messy_string)) if unicodedata.category(ch) != 'Mn'))
-   return filter(lambda ch: ch in string.printable, intermediate_string)
 
 
 class YelpProfilePageError(Exception):
