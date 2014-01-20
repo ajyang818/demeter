@@ -3,7 +3,7 @@ import csv
 import re
 import requests
 
-from harvester.contrivances import clean_weird_characters
+from harvester.contrivances import clean_weird_characters, yelp_oauth
 
 
 def get_user_reviews(url):
@@ -21,12 +21,15 @@ class YelpProfileHarvester(object):
 
     DEFAULT_EXCEL_OUTPUT_FILE = 'test_output.csv'
 
-    def __init__(self, url, excel_output=False, clear=False):
+    def __init__(self, url, excel_output=False, write_db=False, clear=False):
         self.url = url
         self.excel_output = excel_output
+        self.write_db = write_db
+
         if clear:
             clearing_file = open(self.DEFAULT_EXCEL_OUTPUT_FILE, "w+")
             clearing_file.close()
+
         if excel_output:
             self.file = open(self.DEFAULT_EXCEL_OUTPUT_FILE, 'a')
             self.writer = csv.writer(self.file)
@@ -47,6 +50,8 @@ class YelpProfileHarvester(object):
                 parsed_review = self.parse_individual_review(review)
                 if self.excel_output == True:
                     self._output_to_excel(parsed_review)
+                if self.write_db == True:
+                    self._output_to_db(parsed_review)
                 parsed_reviews.append(parsed_review)
             review_counter += 10
 
@@ -86,6 +91,11 @@ class YelpProfileHarvester(object):
             parsed_review['business_link'],
             parsed_review['review'],
         ])
+
+    def _output_to_db(self, parsed_review):
+        # Call Business Sower to create the Business record
+        # Create review object
+        pass
 
     ######################################################
     # Individual Review Parser Methods
@@ -140,7 +150,8 @@ class YelpProfileHarvester(object):
         indiv_review_data['review_id'] = self._get_block_attribute(review_id_block, 'data-review-id', 0)
 
         business_link_block = review.a
-        indiv_review_data['business_link'] = self._get_block_attribute(business_link_block, 'href', trun_char='#')
+        business_link = self._get_block_attribute(business_link_block, 'href', trun_char='#')
+        indiv_review_data['business_slug'] = business_link[5:]
 
         return indiv_review_data
 
