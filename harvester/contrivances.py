@@ -1,5 +1,8 @@
+from bs4 import BeautifulSoup
+from collections import defaultdict
 from django.conf import settings
 import oauth2
+import requests
 import string
 import unicodedata
 
@@ -31,3 +34,34 @@ def yelp_oauth(url_piece, api_version=2):
     signed_url = oauth_request.to_url()
 
     return signed_url
+
+
+def pull_yelp_categories():
+    categories_url = 'http://www.yelp.com/developers/documentation/category_list'
+    response = requests.get(categories_url)
+    if not response.ok:
+        raise ValidationError("Error getting Yelp categories URL")
+
+    res = response.content
+    soup = BeautifulSoup(res)
+
+    categories = soup.find('ul', 'attr-list')
+    yelp_category_nester(categories)
+
+    return
+
+
+def yelp_category_nester(soupobj):
+    import ipdb; ipdb.set_trace();
+    nested_tree = defaultdict(list)
+    for child in soupobj.children:
+        if child.name == 'li':
+            # Child is a 'parent'
+            nested_tree[child.name] = None
+        elif child.name == 'ul':
+            if child.findChildren('li'):
+                child_dict = yelp_category_nester(child)
+                nested_tree[parent_category].append(child_dict)
+            nested_tree[parent_category].append(yelp_category_nester(child))
+        else:
+            continue

@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 import csv
+import datetime
+import json
 import re
 import requests
 
@@ -88,7 +90,7 @@ class YelpProfileHarvester(object):
             parsed_review['address'],
             parsed_review['neighborhood'],
             parsed_review['categories'],
-            parsed_review['business_link'],
+            parsed_review['business_slug'],
             parsed_review['review'],
         ])
 
@@ -183,4 +185,55 @@ class YelpProfileHarvester(object):
 
 
 class YelpProfilePageError(Exception):
+    pass
+
+
+class YelpBusinessSower(object):
+
+    API_BIZ_PREFIX = 'business/'
+
+    def __init__(self, biz_slug):
+        self.biz_slug = biz_slug
+
+    def initiate(self):
+        try:
+            business = Business.objects.get(business_yelp_slug=self.biz_slug)
+        except Business.DoesNotExist:
+            continue
+        else:
+            return business
+
+        api_data = self.get_api_business_data()
+        self.sow_business_data(api_data)
+
+    def get_api_business_data(self):
+        full_api_business_url = self.API_BIZ_PREFIX + self.biz_slug
+        oauth_url = yelp_oauth(full_api_business_url)
+        res = self.get_url_response(oauth_url)
+        return json.loads(res)
+
+    def get_url_response(self, url):
+        response = requests.get(url)
+        if not response.ok:
+            raise YelpBusinessAPIError('Business API URL returned error')
+        return response.content
+
+    def sow_business_data(self, api_data):
+        import ipdb; ipdb.set_trace();
+        data_dict = {}
+        data_dict['business_yelp_slug'] = self.biz_slug
+        data_dict['name'] = api_data.get('name')
+        # data_dict['category']
+        data_dict['is_closed'] = api_data.get('is_closed')
+        if api_data.get('location') and api_data['location']['display_address']:
+            data_dict['address'] = ', '.join(api_data['location']['display_address'])
+        data_dict['neighborhood'] = api_data['neighborhoods'] and api_data['neighborhoods'][0]
+        data_dict['phone'] = api_data.get('display_phone')
+        data_dict['review_count'] = api_data.get('review_count')
+        data_dict['display_stars'] = api_data.get('rating')
+        data_dict['last_harvested'] = datetime.datetime.today()
+        return
+
+
+class YelpBusinessAPIError(Exception):
     pass
