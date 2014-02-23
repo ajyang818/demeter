@@ -10,7 +10,7 @@ class Neighborhood(models.Model):
 
 
 class Category(MPTTModel):
-    slug = models.SlugField(primary_key=True, max_length=200)
+    slug = models.SlugField(unique=True, max_length=200)
     name = models.CharField(max_length=200)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children')
 
@@ -19,7 +19,7 @@ class Category(MPTTModel):
 
 
 class Business(models.Model):
-    business_yelp_slug = models.SlugField(primary_key=True, max_length=100)
+    business_yelp_slug = models.SlugField(unique=True, max_length=100)
     name = models.CharField(max_length=100)
     category = models.ManyToManyField(Category)
     is_closed = models.BooleanField(default=False)

@@ -20,19 +20,26 @@ class Migration(SchemaMigration):
         # Adding model 'Category'
         db.create_table(u'business_category', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('slug', self.gf('django.db.models.fields.SlugField')(unique=True, max_length=200)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            ('parent', self.gf('mptt.fields.TreeForeignKey')(blank=True, related_name='children', null=True, to=orm['business.Category'])),
+            (u'lft', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
+            (u'rght', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
+            (u'tree_id', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
+            (u'level', self.gf('django.db.models.fields.PositiveIntegerField')(db_index=True)),
         ))
         db.send_create_signal(u'business', ['Category'])
 
         # Adding model 'Business'
         db.create_table(u'business_business', (
-            ('business_yelp_slug', self.gf('django.db.models.fields.CharField')(max_length=100, primary_key=True)),
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('business_yelp_slug', self.gf('django.db.models.fields.SlugField')(unique=True, max_length=100)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('is_closed', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('address', self.gf('django.db.models.fields.CharField')(max_length=100, null=True, blank=True)),
             ('phone', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
             ('review_count', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
-            ('display_stars', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=2, decimal_places=1, blank=True)),
+            ('stars', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=2, decimal_places=1, blank=True)),
             ('elite_count', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
             ('elite_stars', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=5, decimal_places=4, blank=True)),
             ('last_harvested', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
@@ -79,22 +86,29 @@ class Migration(SchemaMigration):
         u'business.business': {
             'Meta': {'object_name': 'Business'},
             'address': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
-            'business_yelp_slug': ('django.db.models.fields.CharField', [], {'max_length': '100', 'primary_key': 'True'}),
+            'business_yelp_slug': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '100'}),
             'category': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['business.Category']", 'symmetrical': 'False'}),
-            'display_stars': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '2', 'decimal_places': '1', 'blank': 'True'}),
             'elite_count': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'elite_stars': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '5', 'decimal_places': '4', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_closed': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'last_harvested': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'neighborhood': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['business.Neighborhood']", 'symmetrical': 'False'}),
             'phone': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'review_count': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'})
+            'review_count': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'stars': ('django.db.models.fields.DecimalField', [], {'null': 'True', 'max_digits': '2', 'decimal_places': '1', 'blank': 'True'})
         },
         u'business.category': {
             'Meta': {'object_name': 'Category'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
+            u'level': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
+            u'lft': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'parent': ('mptt.fields.TreeForeignKey', [], {'blank': 'True', 'related_name': "'children'", 'null': 'True', 'to': u"orm['business.Category']"}),
+            u'rght': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'}),
+            'slug': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '200'}),
+            u'tree_id': ('django.db.models.fields.PositiveIntegerField', [], {'db_index': 'True'})
         },
         u'business.neighborhood': {
             'Meta': {'object_name': 'Neighborhood'},
