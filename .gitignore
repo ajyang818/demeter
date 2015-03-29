@@ -37,3 +37,5 @@ nosetests.xml
 
 .DS_Store
 test_output.csv
+
+local_files/*
